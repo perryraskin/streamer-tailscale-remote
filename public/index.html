@@ -119,6 +119,11 @@
     <div id="status"><span id="dot"></span><span id="status-text">checking…</span></div>
   </header>
 
+  <div class="panel" id="liveview" hidden>
+    <p class="label">Live view</p>
+    <img id="stream" alt="Live TV view" style="width:100%;border-radius:12px;display:block;background:#000;" />
+  </div>
+
   <div class="panel">
     <div class="dpad">
       <button class="span-empty"></button>
@@ -217,6 +222,18 @@
     }
     checkHealth();
     setInterval(checkHealth, 15000);
+
+    // Live view (Part 2) — show the panel only if a stream URL is configured.
+    (async () => {
+      try {
+        const res = await fetch('/config');
+        const { stream_url } = await res.json();
+        if (stream_url) {
+          document.getElementById('stream').src = stream_url;
+          document.getElementById('liveview').hidden = false;
+        }
+      } catch { /* control-only; no live view */ }
+    })();
   </script>
 </body>
 </html>

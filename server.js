@@ -24,6 +24,9 @@ const fs = require('fs');
 const PORT = process.env.PORT || 3000;
 const ECP_PORT = 8060;
 const ROKU_IP_OVERRIDE = process.env.ROKU_IP || null;
+// Part 2 (HDMI capture): URL of the live-view MJPEG/stream, if set up. When
+// present, the web remote shows a live-view panel. Unset = control-only.
+const STREAM_URL = process.env.STREAM_URL || null;
 // Optional flat-file log. When set, every log line is appended here in addition
 // to stdout (which journald captures). Rotated externally by logrotate — see
 // deploy/rokupi.logrotate. Leave unset to rely on journald alone.
@@ -164,6 +167,11 @@ async function ecpRequest(method, suffix, { retried = false } = {}) {
 const app = express();
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// GET /config — client-discoverable settings (e.g. live-view stream URL).
+app.get('/config', (req, res) => {
+  res.json({ stream_url: STREAM_URL });
+});
 
 // GET /health — is the Roku reachable?
 app.get('/health', async (req, res) => {

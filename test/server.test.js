@@ -37,7 +37,12 @@ before(async () => {
   await mock.ready;
   serverProc = spawn(process.execPath, ['server.js'], {
     cwd: ROOT,
-    env: { ...process.env, ROKU_IP: '127.0.0.1', PORT: String(SERVER_PORT) },
+    env: {
+      ...process.env,
+      ROKU_IP: '127.0.0.1',
+      PORT: String(SERVER_PORT),
+      STREAM_URL: 'http://127.0.0.1:8080/stream',
+    },
     stdio: 'ignore',
   });
   await waitForHealthy();
@@ -54,6 +59,13 @@ test('GET /health reports the Roku reachable', async () => {
   assert.equal(res.status, 200);
   assert.equal(body.ok, true);
   assert.equal(body.roku_ip, '127.0.0.1');
+});
+
+test('GET /config exposes the configured stream URL', async () => {
+  const res = await fetch(`${BASE}/config`);
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.stream_url, 'http://127.0.0.1:8080/stream');
 });
 
 test('GET /apps returns the installed-apps XML', async () => {

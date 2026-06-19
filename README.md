@@ -133,6 +133,7 @@ All optional — set as `Environment=` lines in the systemd unit, or inline for 
 | `PORT` | `3000` | Port the API/web remote listens on |
 | `ROKU_IP` | (auto via SSDP) | Pin a specific Roku IP and skip discovery |
 | `LOG_FILE` | (unset) | Also append structured logs to this file (see Logging) |
+| `STREAM_URL` | (unset) | Live-view stream URL; when set, the web remote shows a video panel ([Part 2](docs/part2-hdmi-capture.md)) |
 | `ROKUPI_BASE_URL` | `http://localhost:3000` | Base URL the AI runner targets |
 
 ## API

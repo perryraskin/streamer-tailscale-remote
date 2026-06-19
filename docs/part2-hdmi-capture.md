@@ -70,16 +70,68 @@ running* without seeing pixels. Often enough for "is it stuck / what app is up."
 
 ---
 
-## Recommendation
+## Decision (2026-06-19): Option A — USB HDMI capture on the Pi
 
-Decide hardware first:
+The device is a **Roku streaming device on HDMI**, so inline capture is viable.
+Chosen: **Option A**, MJPEG first (simplest), WebRTC later if latency annoys.
+This is a **Pi-era feature** — it needs hardware at the TV, so it waits for the
+on-site Pi install.
 
-- **Roku streaming device** → **Option A** (USB capture + HDCP splitter on the
-  Pi), streamed via WebRTC/MJPEG into the web remote. Best capability-per-dollar
-  and fits the existing architecture.
-- **Roku TV** → start with **Option D** (state queries, already shipped) and add
-  **Option C** (a camera) only if you really need eyes on the screen.
+### Parts (~$25–35)
 
-Either way this is a **Pi-era feature** — it needs hardware at the TV, so it
-waits until you're on-site with the Pi. Tracked as a Proposed decision in the
-Markbase Decisions log; this doc is the options analysis behind it.
+| Part | Notes |
+| --- | --- |
+| USB HDMI capture dongle | UVC / MS2109-class, 1080p30, ~$12. Shows up as `/dev/video0` |
+| 1×2 HDMI splitter that strips HDCP | ~$10–18. Outputs 1080p; this is what lets the dongle see protected playback |
+| 2× short HDMI cables | Roku→splitter, splitter→dongle |
+
+### Wiring
+
+```
+Roku ──HDMI──▶ Splitter ──out 1──▶ TV
+                        └─out 2──▶ USB capture dongle ──USB──▶ Pi
+```
+
+The splitter strips HDCP so the dongle gets a clean signal; out 1 keeps the TV
+working normally.
+
+### Pi software (MJPEG, simplest)
+
+```bash
+sudo apt install -y v4l-utils
+v4l2-ctl --list-devices            # confirm the dongle is /dev/video0
+
+# Option 1: ffmpeg -> MJPEG over HTTP (or use mjpg-streamer)
+sudo apt install -y ffmpeg
+ffmpeg -f v4l2 -framerate 15 -video_size 1280x720 -i /dev/video0 \
+  -f mpjpeg -q:v 7 http://0.0.0.0:8080/stream   # served on :8080
+```
+
+Then point the web remote at it (no code change — the live-view panel and
+`/config` endpoint already exist):
+
+```ini
+# in /etc/systemd/system/rokupi.service
+Environment=STREAM_URL=http://<pi-tailscale-ip>:8080/stream
+```
+
+Restart the service and the **Live view** panel appears at the top of the web
+remote, streaming over Tailscale.
+
+> **Latency/quality:** MJPEG is ~0.5–1s and totally fine for "what's on screen."
+> If you want near-realtime, swap to **WebRTC** via
+> [mediamtx](https://github.com/bluenviron/mediamtx) reading `/dev/video0`, and
+> set `STREAM_URL` to its WebRTC/HLS endpoint. Same panel, lower latency.
+
+### Software status
+
+The app side is **already built and tested**: `GET /config` exposes
+`stream_url`, and `public/index.html` shows a live-view panel when it's set
+(hidden otherwise). All that's left is the hardware + the capture command above.
+
+---
+
+## Appendix: options considered
+
+(Retained for reference — Option A above is the chosen path now that the
+hardware is confirmed as a streaming device.)
