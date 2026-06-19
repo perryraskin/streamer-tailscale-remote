@@ -26,11 +26,16 @@ Reopen PowerShell so `node`, `git`, and `tailscale` are on PATH.
 ## 2. Connect Tailscale
 
 Launch Tailscale and sign in to **your** account so the laptop joins your
-tailnet. Note its address — your phone and AI agent will use it:
+tailnet. (The family member needs no Tailscale account — see the README's
+"Account model" section.) Note its address — your phone and AI agent will use it:
 
 ```powershell
 tailscale ip -4
 ```
+
+Then, in the [Tailscale admin console](https://login.tailscale.com/admin/machines),
+**disable key expiry** on this machine so it doesn't drop off the tailnet in
+~6 months when you're not there to re-authenticate it.
 
 ## 3. Get the app
 

@@ -16,6 +16,23 @@ must never be exposed to the public internet. Tailscale puts the Pi, your
 phone, and any AI client on the same private WireGuard mesh — so you reach the
 Pi from anywhere as if you were on the couch, with nothing open to the world.
 
+### Account model
+
+The person doing the remote support (you) is the only one who needs a Tailscale
+account. **Log the Pi into _your_ account** so it joins _your_ tailnet next to
+your phone — the family member whose TV it is needs no account and never touches
+Tailscale. One account, one tailnet; you admin everything. The free tier covers
+this easily (you're using ~2 devices). If they happen to already run Tailscale,
+you can instead have them [share just the Pi](https://tailscale.com/kb/1084/sharing)
+to your account on the free plan — but that's extra complexity you don't need.
+
+> **⚠️ Disable key expiry on the Pi.** By default Tailscale expires a device's
+> key every ~6 months, after which it drops off the tailnet until re-authed —
+> bad for a box you can't reach. In the admin console, open the Pi under
+> **Machines** and **disable key expiry** (or give it a tag, e.g. `tag:rokupi`,
+> since tagged devices don't expire). This is the #1 reason set-and-forget
+> Tailscale devices go dark.
+
 ## What you need
 
 - A Raspberry Pi (4 or 5 recommended) + microSD card, that will live at the TV's location
@@ -67,9 +84,13 @@ node -v
 **4. Install Tailscale and join your tailnet:**
 ```bash
 curl -fsSL https://tailscale.com/install.sh | sh
-sudo tailscale up        # follow the auth link
+sudo tailscale up        # follow the auth link — sign into YOUR account
 tailscale ip -4          # note this IP — you'll use it from your phone
 ```
+
+Then in the [Tailscale admin console](https://login.tailscale.com/admin/machines),
+**disable key expiry** on the `rokupi` device (see Account model above) so it
+doesn't drop off the tailnet months later.
 
 **5. Install RokuPi:**
 ```bash
