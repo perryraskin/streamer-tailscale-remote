@@ -1,0 +1,17 @@
+[Unit]
+Description=RokuPi API
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/home/pi/rokupi
+ExecStart=/usr/bin/node /home/pi/rokupi/server.js
+Restart=always
+RestartSec=5
+# ROKU_IP is OPTIONAL. The server auto-discovers the Roku via SSDP on startup
+# and re-discovers if a request fails (survives DHCP IP changes). Uncomment and
+# set this only to pin a specific Roku or to skip discovery during local dev.
+# Environment=ROKU_IP=192.168.1.50
+
+[Install]
+WantedBy=multi-user.target
