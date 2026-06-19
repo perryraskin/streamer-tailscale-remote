@@ -36,6 +36,11 @@ the router is a nice belt-and-suspenders.
 
 ## Setup
 
+> **No Pi yet?** You can run RokuPi on any always-on machine on the Roku's LAN —
+> a spare Windows laptop works great as an interim host for control + the AI
+> agent (just not Part 2's HDMI capture). See
+> [docs/windows-host.md](docs/windows-host.md).
+
 ### Part A — at home (before you deliver the Pi)
 
 **1. Flash the SD card.** Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/),
