@@ -29,13 +29,13 @@ const ROKU_IP_OVERRIDE = process.env.ROKU_IP || null;
 // deploy/rokupi.logrotate. Leave unset to rely on journald alone.
 const LOG_FILE = process.env.LOG_FILE || null;
 
-// Friendly name -> Roku channel (app) ID. IDs are stable per channel but
-// best-effort here; confirm against GET /apps on the actual Roku and adjust.
+// Friendly name -> Roku channel (app) ID. Confirm against GET /apps on the
+// actual Roku if a launch misfires.
 const APP_MAP = {
-  netflix: '12',
-  youtube: '837',
-  plex: '13535',
-  youtube_tv: '195316',
+  netflix: '12',        // verified
+  youtube: '837',       // verified
+  plex: '13535',        // verified
+  youtube_tv: '195316', // community-reported, unverified — check /apps to confirm
 };
 
 // ---------------------------------------------------------------------------
@@ -264,15 +264,19 @@ app.post('/task/open/:appName', async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// Startup
+// Startup — only when run directly, so the app can be imported in tests.
 // ---------------------------------------------------------------------------
-app.listen(PORT, '0.0.0.0', async () => {
-  logAction('server_start', { port: PORT, roku_ip_override: ROKU_IP_OVERRIDE });
-  if (!ROKU_IP_OVERRIDE) {
-    const ip = await resolveRokuIp();
-    if (ip) logAction('startup_discovery', { roku_ip: ip });
-    else logAction('startup_discovery_failed', { note: 'will retry on first request' });
-  }
-  // eslint-disable-next-line no-console
-  console.log(`RokuPi API running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', async () => {
+    logAction('server_start', { port: PORT, roku_ip_override: ROKU_IP_OVERRIDE });
+    if (!ROKU_IP_OVERRIDE) {
+      const ip = await resolveRokuIp();
+      if (ip) logAction('startup_discovery', { roku_ip: ip });
+      else logAction('startup_discovery_failed', { note: 'will retry on first request' });
+    }
+    // eslint-disable-next-line no-console
+    console.log(`RokuPi API running on port ${PORT}`);
+  });
+}
+
+module.exports = { app, APP_MAP, resolveRokuIp, discoverRokuViaSsdp };

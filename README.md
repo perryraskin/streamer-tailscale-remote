@@ -179,6 +179,25 @@ ROKU_IP=192.168.1.50 npm start     # or pin one (also works with no Roku present
 ```
 Then open <http://localhost:3000>.
 
+## Testing (no Roku needed)
+
+The repo ships a **mock Roku** so the whole stack — API, tasks, and the AI
+runner — can be exercised without hardware:
+
+```bash
+npm test          # boots the mock + server, runs the integration suite
+```
+
+To drive the real web remote against the mock by hand:
+
+```bash
+npm run mock-roku                  # terminal 1: fake Roku on :8060
+ROKU_IP=127.0.0.1 npm start        # terminal 2: server points at the mock
+# open http://localhost:3000 — buttons return 200 and are logged by the mock
+```
+
+CI runs the suite on Node 18/20/22 (see `.github/workflows/ci.yml`).
+
 ## Repo layout
 
 | Path | Role |
@@ -187,6 +206,8 @@ Then open <http://localhost:3000>.
 | `public/index.html` | Phone web remote (D-pad, playback, app launchers, health) |
 | `ai/` | `control_roku` tool definition + runner |
 | `deploy/` | systemd unit, journald + logrotate configs |
+| `test/` | mock Roku + integration suite (`npm test`) |
+| `docs/` | extra guides (e.g. running on a Windows laptop) |
 
 ## License
 
