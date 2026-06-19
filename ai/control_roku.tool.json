@@ -1,0 +1,54 @@
+{
+  "name": "control_roku",
+  "description": "Control a family member's Roku TV through the RokuPi bridge. Use this to diagnose and fix common TV problems remotely: check whether the TV is reachable, see what app is running, navigate menus, launch apps, and recover a stuck TV. All actions are non-destructive — you cannot make purchases, change accounts, delete apps, or factory reset. When a situation is ambiguous, confirm with the user before taking a major action rather than guessing.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "description": "What to do. 'health' checks if the Roku is reachable. 'active_app' returns the currently running app. 'list_apps' lists installed apps. 'press_key' sends one remote button (requires 'key'). 'open_app' launches a known app by friendly name (requires 'app_name'). 'launch_app' launches by numeric Roku channel id (requires 'app_id'). 'reset_home' double-presses Home to recover a stuck TV.",
+        "enum": [
+          "health",
+          "active_app",
+          "list_apps",
+          "press_key",
+          "open_app",
+          "launch_app",
+          "reset_home"
+        ]
+      },
+      "key": {
+        "type": "string",
+        "description": "Remote button for action 'press_key'. One press per call.",
+        "enum": [
+          "Home",
+          "Back",
+          "Up",
+          "Down",
+          "Left",
+          "Right",
+          "Select",
+          "Play",
+          "Rev",
+          "Fwd",
+          "InstantReplay",
+          "Info",
+          "Enter",
+          "VolumeUp",
+          "VolumeDown",
+          "VolumeMute"
+        ]
+      },
+      "app_name": {
+        "type": "string",
+        "description": "Friendly app name for action 'open_app'.",
+        "enum": ["netflix", "youtube", "plex", "youtube_tv"]
+      },
+      "app_id": {
+        "type": "string",
+        "description": "Numeric Roku channel id for action 'launch_app' (e.g. '12' for Netflix). Use 'list_apps' first to find ids."
+      }
+    },
+    "required": ["action"]
+  }
+}

@@ -19,10 +19,15 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const dgram = require('dgram');
+const fs = require('fs');
 
 const PORT = process.env.PORT || 3000;
 const ECP_PORT = 8060;
 const ROKU_IP_OVERRIDE = process.env.ROKU_IP || null;
+// Optional flat-file log. When set, every log line is appended here in addition
+// to stdout (which journald captures). Rotated externally by logrotate — see
+// deploy/rokupi.logrotate. Leave unset to rely on journald alone.
+const LOG_FILE = process.env.LOG_FILE || null;
 
 // Friendly name -> Roku channel (app) ID. IDs are stable per channel but
 // best-effort here; confirm against GET /apps on the actual Roku and adjust.
@@ -37,9 +42,15 @@ const APP_MAP = {
 // Logging: one structured JSON object per line to stdout (journald captures it).
 // ---------------------------------------------------------------------------
 function logAction(event, fields = {}) {
-  process.stdout.write(
-    JSON.stringify({ ts: new Date().toISOString(), event, ...fields }) + '\n'
-  );
+  const line =
+    JSON.stringify({ ts: new Date().toISOString(), event, ...fields }) + '\n';
+  process.stdout.write(line);
+  if (LOG_FILE) {
+    // Fire-and-forget; never let a logging failure crash a request.
+    fs.appendFile(LOG_FILE, line, (err) => {
+      if (err) process.stdout.write(`{"event":"log_file_error","error":${JSON.stringify(err.message)}}\n`);
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------

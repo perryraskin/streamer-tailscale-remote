@@ -12,6 +12,9 @@ RestartSec=5
 # and re-discovers if a request fails (survives DHCP IP changes). Uncomment and
 # set this only to pin a specific Roku or to skip discovery during local dev.
 # Environment=ROKU_IP=192.168.1.50
+# LOG_FILE is OPTIONAL. Logs always go to stdout (-> journald). Set this to also
+# append a flat JSON-lines file; rotate it with deploy/rokupi.logrotate.
+# Environment=LOG_FILE=/var/log/rokupi/rokupi.log
 
 [Install]
 WantedBy=multi-user.target

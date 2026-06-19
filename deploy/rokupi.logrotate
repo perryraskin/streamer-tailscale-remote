@@ -1,0 +1,12 @@
+# logrotate config for the optional RokuPi flat-file log.
+# Install to /etc/logrotate.d/rokupi (only needed if you set LOG_FILE).
+# Assumes LOG_FILE=/var/log/rokupi/rokupi.log — adjust the path to match.
+/var/log/rokupi/rokupi.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}
