@@ -1,0 +1,19 @@
+[Unit]
+Description=FamilyTV API (Google TV)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/home/pi/familytv/google
+# Reconnect ADB on start (ignore failure; the driver retries per request).
+ExecStartPre=-/usr/bin/adb connect ${GOOGLE_TV_ADDR}
+ExecStart=/usr/bin/node /home/pi/familytv/google/server.js
+Restart=always
+RestartSec=5
+# Address of the paired Google TV (see docs/ADB-Pairing-Guide.md).
+Environment=GOOGLE_TV_ADDR=192.168.1.50:5555
+# Optional: DRIVER=google-tv (default), STREAM_URL for an HDMI live-view panel.
+# Environment=STREAM_URL=http://127.0.0.1:8080/?action=stream
+
+[Install]
+WantedBy=multi-user.target
