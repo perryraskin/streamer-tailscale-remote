@@ -32,6 +32,41 @@ inspection, text input, and app launching.
    ```
 3. Open <http://localhost:3000> (or `http://<host-tailscale-ip>:3000` from your phone).
 
+## Reaching it from your house (networking)
+
+The Google TV can't run this server — it's *controlled* via ADB. So you need
+two things: **(1)** a Tailscale presence on the parents' LAN, and **(2)** a host
+running this server with `adb` paired to the TV. Three ways to arrange that:
+
+| Option | Tailscale on… | Server runs on… | ADB path | Best for |
+| --- | --- | --- | --- | --- |
+| **1. Tailscale on the TV** | the Google TV (Android TV app) | your Mac (at home) | over Tailscale to the TV's tailnet IP | quickest to test — no extra device |
+| **2. Host at parents'** ⭐ | a Pi or their PC | that same Pi/PC | local LAN (fast) | permanent set-and-forget deploy |
+| **3. Subnet router** | a Pi/PC | your Mac | over Tailscale to the TV's LAN IP | rarely worth it vs. #2 |
+
+```
+Option 1:  Phone/Mac ──Tailscale──► Google TV     (server on your Mac; adb → TV tailnet IP)
+Option 2:  Phone ──Tailscale──► Pi/PC at parents' (server + adb here) ──LAN──► Google TV
+```
+
+**Day one (recommended for testing):** Option 1 — install Tailscale on the
+Google TV, run the server on your Mac:
+
+```bash
+# on the Google TV: install Tailscale from the Play Store, sign into YOUR account
+adb connect <tv-tailnet-ip>:<adb-port>
+GOOGLE_TV_ADDR=<tv-tailnet-ip>:<adb-port> npm start
+```
+
+**Permanent deploy (recommended):** Option 2 on a Pi — Tailscale + this server +
+ADB all on a small always-on box at the parents'; you reach
+`http://<pi-tailnet-ip>:3000` from anywhere. ADB stays on the local LAN, so it's
+faster and steadier than ADB-over-Tailscale.
+
+> Whatever carries Tailscale at the parents' (TV, Pi, or PC), **disable key
+> expiry** on it in the Tailscale admin console so it doesn't drop off the
+> tailnet in ~6 months. The Google TV itself never runs this server.
+
 ## API
 
 | Method | Path | Purpose |
