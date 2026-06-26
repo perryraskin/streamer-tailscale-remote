@@ -28,18 +28,17 @@ const KEYMAP = {
   mute: 'KEYCODE_VOLUME_MUTE',
 };
 
-// Friendly app name -> Android package. Confirm against listApps() on a real
-// device; package names occasionally differ by region/version.
+// Friendly app name -> Android package. Verified against the parents' Google TV
+// Streamer via `pm list packages -3` on 2026-06-26. Re-run /apps if apps change.
 const APP_PACKAGES = {
   netflix: 'com.netflix.ninja',
   youtube: 'com.google.android.youtube.tv',
   youtube_tv: 'com.google.android.youtube.tvunplugged',
-  plex: 'com.plexapp.android',
   disney_plus: 'com.disney.disneyplus',
-  hbo_max: 'com.wbd.stream',
   prime_video: 'com.amazon.amazonvideo.livingroom',
-  hulu: 'com.hulu.plus',
-  spotify: 'com.spotify.tv.android',
+  hulu: 'com.hulu.livingroomplus',
+  tubi: 'com.tubitv',
+  peacock: 'com.peacocktv.peacockandroid',
 };
 
 const name = 'google-tv';
