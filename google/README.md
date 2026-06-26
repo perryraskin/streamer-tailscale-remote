@@ -5,8 +5,8 @@ Tailscale. This is the **v1** driver. It talks to the device over **ADB**, which
 (unlike Roku ECP) gives the agent real diagnostics: screenshots, foreground-app
 inspection, text input, and app launching.
 
-> Specs/decisions live in Markbase (`rokupi` workspace). Roku ECP lives in the
-> sibling [`../roku`](../roku) project as a future driver.
+> Specs/decisions live in Markbase (`streamer-tailscale-remote` workspace).
+> Roku ECP lives in the sibling [`../roku`](../roku) project as a future driver.
 
 ## What's here
 
@@ -19,18 +19,76 @@ inspection, text input, and app launching.
 | `public/index.html` | phone web remote — D-pad, apps, **text input**, **live screenshot** |
 | `ai/` | `control_tv` AI tool + runner |
 | `deploy/familytv.service` | systemd unit |
+| `.env.example` | placeholder env file; copy to private `.env` on the host |
+| `docs/Deployment-Env.md` | required env vars, Tailscale Serve URL, devpi/systemd notes |
 | `docs/ADB-Pairing-Guide.md` | how to pair the controller host with the TV |
 | `test/` | fake adb + integration suite (`npm test`) |
 
 ## Setup
 
 1. **Pair ADB** with the Google TV — see [docs/ADB-Pairing-Guide.md](docs/ADB-Pairing-Guide.md).
-2. Install and run, pointing at the paired device:
+2. Create a private env file from the placeholder:
+   ```bash
+   cp .env.example .env
+   $EDITOR .env
+   ```
+3. Set `GOOGLE_TV_ADDR` in `.env` to the paired TV target:
+   ```bash
+   GOOGLE_TV_ADDR=<tv-name>.<tailnet>.ts.net:<adb-connect-port>
+   ```
+4. Install and run:
    ```bash
    npm install
-   GOOGLE_TV_ADDR=<TV_IP>:<ADB_PORT> npm start
+   scripts/start-familytv.sh --serve
    ```
-3. Open <http://localhost:3000> (or `http://<host-tailscale-ip>:3000` from your phone).
+5. Open <http://localhost:3000> locally. From your phone, use the FamilyTV host
+   HTTPS URL shown by `tailscale serve status`; the TV's Tailscale name is only
+   the ADB target.
+
+If the wireless-debugging port changes, restart with the new port:
+
+```bash
+GOOGLE_TV_ADDR=<tv-name>.<tailnet>.ts.net:<new-adb-connect-port> npm start
+```
+
+For a clean parents' install after factory reset, use the short
+[docs/Quick-Parents-Setup.md](docs/Quick-Parents-Setup.md) checklist or the
+full [docs/Parents-Install-Runbook.md](docs/Parents-Install-Runbook.md).
+
+## Install as a phone app
+
+The web remote is a PWA: it includes a manifest, service worker, standalone
+display metadata, home-screen icons, typed commands, and browser voice input
+where supported.
+
+For local testing, `http://localhost:3000` is enough. For a phone on Tailscale,
+serve the FamilyTV host over tailnet HTTPS so the service worker can run and the
+browser treats it as a real installable app:
+
+```bash
+tailscale serve --https=8443 --bg localhost:3000
+tailscale serve status
+```
+
+Then open the HTTPS MagicDNS URL that Tailscale reports for the host running
+FamilyTV and use the browser's Add to Home Screen / Install action.
+
+Example URL shape:
+
+```text
+https://<familytv-host>.<tailnet>.ts.net:8443/
+```
+
+Use port `8443` when port `443` is already occupied on the FamilyTV host. HTTPS
+on `8443` is still a secure PWA install URL.
+
+For hands-free control from your iPhone, create the Siri Shortcut in
+[docs/Siri-Shortcut.md](docs/Siri-Shortcut.md). It sends dictated commands to
+the same `/command` endpoint used by the PWA.
+
+The screenshot panel has an optional auto-refresh selector. `live` polls as
+fast as ADB screenshots can complete without overlapping requests; it is useful
+for short troubleshooting sessions but is heavier than 2s/3s polling.
 
 ## Reaching it from your house (networking)
 
@@ -54,9 +112,11 @@ Google TV, run the server on your Mac:
 
 ```bash
 # on the Google TV: install Tailscale from the Play Store, sign into YOUR account
-adb connect <tv-tailnet-ip>:<adb-port>
-GOOGLE_TV_ADDR=<tv-tailnet-ip>:<adb-port> npm start
+adb connect <tv-name>.<tailnet>.ts.net:<adb-connect-port>
+GOOGLE_TV_ADDR=<tv-name>.<tailnet>.ts.net:<adb-connect-port> scripts/start-familytv.sh --serve
 ```
+
+Keep the actual target in private `.env`, not in Git.
 
 **Permanent deploy (recommended):** Option 2 on a Pi — Tailscale + this server +
 ADB all on a small always-on box at the parents'; you reach
@@ -79,20 +139,27 @@ faster and steadier than ADB-over-Tailscale.
 | POST | `/remote/:key` | a safe key (home, back, up/down/left/right, select, play_pause, rewind, fast_forward, volume_up/down, mute) |
 | POST | `/type` | type text — `{ "text": "..." }` |
 | POST | `/launch/:appName` | launch a known app (netflix, youtube, youtube_tv, …) |
+| POST | `/command` | natural-language command, including Siri/PWA voice and Google TV search queries |
+| POST | `/task/wake` | wake the streamer/TV with `KEYCODE_WAKEUP` |
 | POST | `/task/reset-home` | recover to the home screen |
 
-App→package mappings live in `drivers/google-tv/index.js` (`APP_PACKAGES`);
-confirm against `/apps` on the real device.
+App→package mappings live in `drivers/google-tv/index.js` (`APP_PACKAGES`).
+They were tuned against the parents' Google TV Streamer on 2026-06-26; re-run
+`/apps` if installed apps change.
 
 ## Configuration
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `GOOGLE_TV_ADDR` | (none) | `IP:PORT` of the paired Google TV — all adb calls target it |
+| `GOOGLE_TV_ADDR` | (required unless exactly one adb device is connected) | `HOST:PORT` of the paired Google TV — all adb calls target it |
 | `ADB_BIN` | `adb` | path to the adb binary (tests point this at a fake) |
 | `PORT` | `3000` | API/web-remote port |
+| `TAILSCALE_SERVE_PORT` | `8443` | Tailscale HTTPS port used by `scripts/start-familytv.sh --serve` |
 | `DRIVER` | `google-tv` | which driver to load |
 | `STREAM_URL` | (unset) | optional HDMI live-view stream for the web remote |
+
+See [docs/Deployment-Env.md](docs/Deployment-Env.md) for the private env file,
+Tailscale Serve URL, and devpi/systemd setup.
 
 ## Testing (no device needed)
 

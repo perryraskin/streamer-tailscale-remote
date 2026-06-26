@@ -23,6 +23,9 @@ const ROUTES = {
   press_button: { method: 'POST', needs: ['key'], path: (i) => `/remote/${encodeURIComponent(i.key)}` },
   type_text: { method: 'POST', needs: ['text'], path: () => '/type', body: (i) => ({ text: i.text }) },
   open_app: { method: 'POST', needs: ['app_name'], path: (i) => `/launch/${encodeURIComponent(i.app_name)}` },
+  open_tv_assistant: { method: 'POST', path: () => '/command', body: () => ({ text: 'open Gemini' }) },
+  ask_tv_assistant: { method: 'POST', needs: ['query'], path: () => '/command', body: (i) => ({ text: `ask Google TV ${i.query}` }) },
+  wake_tv: { method: 'POST', path: () => '/task/wake' },
   reset_home: { method: 'POST', path: () => '/task/reset-home' },
 };
 

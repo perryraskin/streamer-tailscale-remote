@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FamilyTV">
+  <rect width="512" height="512" rx="112" fill="#0f1320"/>
+  <rect x="92" y="128" width="328" height="216" rx="32" fill="#f2f4fa"/>
+  <rect x="120" y="156" width="272" height="160" rx="18" fill="#1a1f30"/>
+  <circle cx="256" cy="236" r="54" fill="#4f8cff"/>
+  <path d="M256 188v96M208 236h96" stroke="#f2f4fa" stroke-width="34" stroke-linecap="round"/>
+  <path d="M208 384h96" stroke="#f2f4fa" stroke-width="28" stroke-linecap="round"/>
+</svg>

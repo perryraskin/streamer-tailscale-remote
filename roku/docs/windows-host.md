@@ -81,7 +81,7 @@ nssm install RokuPi "C:\Program Files\nodejs\node.exe" "C:\rokupi\server.js"
 nssm set RokuPi AppDirectory C:\rokupi
 nssm set RokuPi AppExit Default Restart
 # Optional env: pin the Roku and/or write a log file
-# nssm set RokuPi AppEnvironmentExtra ROKU_IP=192.168.1.50 LOG_FILE=C:\rokupi\rokupi.log
+# nssm set RokuPi AppEnvironmentExtra ROKU_IP=<roku-ip> LOG_FILE=C:\rokupi\rokupi.log
 nssm start RokuPi
 ```
 

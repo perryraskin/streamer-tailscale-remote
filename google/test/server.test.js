@@ -73,6 +73,28 @@ test('GET /config advertises driver, apps, and keys', async () => {
   assert.ok(cfg.keys.includes('home'));
 });
 
+test('PWA assets are served for home-screen install', async () => {
+  const manifestRes = await fetch(`${BASE}/manifest.webmanifest`);
+  assert.equal(manifestRes.status, 200);
+  assert.match(manifestRes.headers.get('content-type'), /manifest\+json/);
+  const manifest = await manifestRes.json();
+  assert.equal(manifest.name, 'FamilyTV Remote');
+  assert.equal(manifest.display, 'standalone');
+  assert.equal(manifest.start_url, '/');
+  assert.ok(manifest.icons.some((icon) => icon.sizes === '192x192' && icon.type === 'image/png'));
+  assert.ok(manifest.icons.some((icon) => icon.sizes === '512x512' && icon.type === 'image/png'));
+
+  const swRes = await fetch(`${BASE}/sw.js`);
+  assert.equal(swRes.status, 200);
+  assert.match(swRes.headers.get('content-type'), /javascript/);
+
+  const iconRes = await fetch(`${BASE}/icons/icon-192.png`);
+  assert.equal(iconRes.status, 200);
+  assert.equal(iconRes.headers.get('content-type'), 'image/png');
+  const icon = Buffer.from(await iconRes.arrayBuffer());
+  assert.equal(icon.slice(1, 4).toString(), 'PNG');
+});
+
 test('GET /current-app parses the foreground package', async () => {
   const c = await (await fetch(`${BASE}/current-app`)).json();
   assert.equal(c.package, 'com.google.android.youtube.tv');
@@ -93,6 +115,105 @@ test('POST /remote/:key sends the mapped keyevent', async () => {
 test('POST /remote/:key with an unknown key is a 400', async () => {
   const res = await fetch(`${BASE}/remote/launch_nukes`, { method: 'POST' });
   assert.equal(res.status, 400);
+  assert.deepEqual(readLog(), []);
+});
+
+test('POST /command opens an app from natural language', async () => {
+  const res = await fetch(`${BASE}/command`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'open hulu' }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.parsed.action, 'open_app');
+  assert.equal(body.parsed.app_name, 'hulu');
+  assert.deepEqual(readLog(), ['launch com.hulu.livingroomplus']);
+});
+
+test('POST /command presses a remote key from natural language', async () => {
+  const res = await fetch(`${BASE}/command`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'press right' }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.parsed.action, 'press_button');
+  assert.equal(body.parsed.key, 'right');
+  assert.deepEqual(readLog(), ['keyevent KEYCODE_DPAD_RIGHT']);
+});
+
+test('POST /command types text from natural language', async () => {
+  const res = await fetch(`${BASE}/command`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'type Dr Phil' }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.parsed.action, 'type_text');
+  assert.equal(body.parsed.text, 'Dr Phil');
+  assert.deepEqual(readLog(), ['text Dr%sPhil']);
+});
+
+test('POST /command opens Google TV search from natural language', async () => {
+  const res = await fetch(`${BASE}/command`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'open Gemini' }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.parsed.action, 'open_tv_assistant');
+  assert.deepEqual(readLog(), ['assistant_open']);
+});
+
+test('POST /command sends a dictated query to Google TV search', async () => {
+  const res = await fetch(`${BASE}/command`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: 'ask Gemini weather' }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.parsed.action, 'ask_tv_assistant');
+  assert.equal(body.parsed.query, 'weather');
+  assert.deepEqual(readLog(), ['assistant_query weather']);
+});
+
+test('POST /command sends a multi-word dictated query to Google TV search', async () => {
+  const res = await fetch(`${BASE}/command`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: 'ask Google TV to find Shrek' }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.parsed.action, 'ask_tv_assistant');
+  assert.equal(body.parsed.query, 'Shrek');
+  assert.deepEqual(readLog(), ['assistant_query Shrek']);
+});
+
+test('POST /command maps find movie phrases to Google TV search', async () => {
+  const res = await fetch(`${BASE}/command`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: 'find the movie Shrek' }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.parsed.action, 'ask_tv_assistant');
+  assert.equal(body.parsed.query, 'Shrek');
+  assert.deepEqual(readLog(), ['assistant_query Shrek']);
+});
+
+test('POST /command rejects unknown commands before any device action', async () => {
+  const res = await fetch(`${BASE}/command`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'make toast' }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 400);
+  assert.equal(body.ok, false);
   assert.deepEqual(readLog(), []);
 });
 
@@ -121,6 +242,27 @@ test('POST /task/reset-home presses Home', async () => {
   assert.deepEqual(readLog(), ['keyevent KEYCODE_HOME']);
 });
 
+test('POST /task/wake sends wakeup without toggling power', async () => {
+  const res = await fetch(`${BASE}/task/wake`, { method: 'POST' });
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.ok, true);
+  assert.deepEqual(readLog(), ['keyevent KEYCODE_WAKEUP']);
+});
+
+test('POST /command wakes the TV from natural language', async () => {
+  const res = await fetch(`${BASE}/command`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: 'wake up the TV' }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.ok, true);
+  assert.equal(body.parsed.action, 'wake_tv');
+  assert.deepEqual(readLog(), ['keyevent KEYCODE_WAKEUP']);
+});
+
 test('GET /screenshot returns a PNG', async () => {
   const res = await fetch(`${BASE}/screenshot`);
   assert.equal(res.status, 200);
@@ -147,6 +289,24 @@ test('control_tv runner: open_app launches the mapped package', async () => {
   const r = await runControlTv({ action: 'open_app', app_name: 'youtube' }, { baseUrl: BASE });
   assert.equal(r.ok, true);
   assert.deepEqual(readLog(), ['launch com.google.android.youtube.tv']);
+});
+
+test('control_tv runner: open_tv_assistant opens Google TV search', async () => {
+  const r = await runControlTv({ action: 'open_tv_assistant' }, { baseUrl: BASE });
+  assert.equal(r.ok, true);
+  assert.deepEqual(readLog(), ['assistant_open']);
+});
+
+test('control_tv runner: ask_tv_assistant sends a Google TV search query', async () => {
+  const r = await runControlTv({ action: 'ask_tv_assistant', query: 'weather' }, { baseUrl: BASE });
+  assert.equal(r.ok, true);
+  assert.deepEqual(readLog(), ['assistant_query weather']);
+});
+
+test('control_tv runner: wake_tv sends wakeup', async () => {
+  const r = await runControlTv({ action: 'wake_tv' }, { baseUrl: BASE });
+  assert.equal(r.ok, true);
+  assert.deepEqual(readLog(), ['keyevent KEYCODE_WAKEUP']);
 });
 
 test('control_tv runner: missing required field is rejected before any call', async () => {
