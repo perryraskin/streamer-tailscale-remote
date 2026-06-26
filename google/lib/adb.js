@@ -4,7 +4,7 @@
  * Thin wrapper around the `adb` binary.
  *
  * The binary is `ADB_BIN` (default `adb`) and, when `GOOGLE_TV_ADDR` is set
- * (e.g. `192.168.1.50:5555`), every call is targeted at that device with
+ * (e.g. `<tv-name>.<tailnet>.ts.net:5555`), every call is targeted at that device with
  * `-s`. Tests point `ADB_BIN` at a fake adb script, so the driver needs no
  * test seams of its own.
  */

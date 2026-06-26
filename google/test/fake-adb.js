@@ -17,6 +17,7 @@ const log = (line) => {
 };
 
 const is = (...parts) => parts.every((p, i) => args[i] === p);
+const unquote = (value) => String(value || '').replace(/^"|"$/g, '').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
 
 // 1x1 PNG
 const PNG = Buffer.from(
@@ -45,6 +46,12 @@ if (is('shell', 'getprop', 'ro.product.model')) {
 } else if (is('shell', 'monkey', '-p')) {
   log(`launch ${args[3]}`);
   process.stdout.write('Events injected: 1\n');
+} else if (is('shell', 'am', 'start', '-a', 'android.search.action.GLOBAL_SEARCH', '--es', 'query')) {
+  log(`assistant_query ${unquote(args[7])}`);
+  process.stdout.write('Starting: Intent { act=android.search.action.GLOBAL_SEARCH (has extras) }\n');
+} else if (is('shell', 'am', 'start', '-a', 'android.search.action.GLOBAL_SEARCH')) {
+  log('assistant_open');
+  process.stdout.write('Starting: Intent { act=android.search.action.GLOBAL_SEARCH }\n');
 } else if (is('exec-out', 'screencap', '-p')) {
   process.stdout.write(PNG);
 } else {

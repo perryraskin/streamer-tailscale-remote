@@ -197,7 +197,7 @@ clean endpoints, never raw ECP, and only via non-destructive actions. See
 ```bash
 npm install
 npm start                          # let SSDP discover a Roku on your LAN
-ROKU_IP=192.168.1.50 npm start     # or pin one (also works with no Roku present)
+ROKU_IP=<roku-ip> npm start        # or pin one (also works with no Roku present)
 ```
 Then open <http://localhost:3000>.
 

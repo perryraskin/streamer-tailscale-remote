@@ -43,6 +43,10 @@ const APP_PACKAGES = {
 
 const name = 'google-tv';
 
+function quoteShellArg(value) {
+  return `"${String(value).replace(/(["\\$`])/g, '\\$1').replace(/\s+/g, ' ').trim()}"`;
+}
+
 async function health() {
   const model = (await adb(['shell', 'getprop', 'ro.product.model'])).trim();
   return { ok: true, device: GOOGLE_TV_ADDR, model: model || 'unknown' };
@@ -99,6 +103,22 @@ async function launchApp(appName) {
   return { ok: true, app: appName, package: pkg };
 }
 
+async function openAssistant() {
+  await adb(['shell', 'am', 'start', '-a', 'android.search.action.GLOBAL_SEARCH']);
+  return { ok: true, assistant: 'google-tv-search' };
+}
+
+async function askAssistant(query) {
+  const text = String(query || '').trim();
+  if (!text) {
+    const err = new Error('query is required');
+    err.code = 'BAD_QUERY';
+    throw err;
+  }
+  await adb(['shell', 'am', 'start', '-a', 'android.search.action.GLOBAL_SEARCH', '--es', 'query', quoteShellArg(text)]);
+  return { ok: true, assistant: 'google-tv-search', query: text };
+}
+
 async function takeScreenshot() {
   const png = await adb(['exec-out', 'screencap', '-p'], { binary: true });
   return { contentType: 'image/png', buffer: png };
@@ -107,6 +127,11 @@ async function takeScreenshot() {
 async function resetHome() {
   await adb(['shell', 'input', 'keyevent', 'KEYCODE_HOME']);
   return { ok: true, task: 'reset-home' };
+}
+
+async function wakeDevice() {
+  await adb(['shell', 'input', 'keyevent', 'KEYCODE_WAKEUP']);
+  return { ok: true, task: 'wake' };
 }
 
 module.exports = {
@@ -119,6 +144,9 @@ module.exports = {
   pressButton,
   typeText,
   launchApp,
+  openAssistant,
+  askAssistant,
   takeScreenshot,
   resetHome,
+  wakeDevice,
 };

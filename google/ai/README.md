@@ -17,9 +17,12 @@ FamilyTV HTTP API. The model never runs raw ADB.
 | `current_app` | — | `GET /current-app` |
 | `list_apps` | — | `GET /apps` |
 | `take_screenshot` | — | `GET /screenshot` (PNG) |
+| `wake_tv` | — | `POST /task/wake` |
 | `press_button` | `key` | `POST /remote/:key` |
 | `type_text` | `text` | `POST /type` |
 | `open_app` | `app_name` | `POST /launch/:app_name` |
+| `open_tv_assistant` | — | `POST /command` (`open Gemini`) |
+| `ask_tv_assistant` | `query` | `POST /command` (`ask Gemini ...`) |
 | `reset_home` | — | `POST /task/reset-home` |
 
 ## Screenshots in the loop

@@ -1,20 +1,23 @@
 {
   "name": "control_tv",
-  "description": "Control and inspect a family member's Google TV through the FamilyTV bridge. Use this to diagnose and fix common TV problems remotely: check reachability, see what app is on screen, take a screenshot to understand the current state, navigate menus, type text, launch apps, and recover a stuck TV. All actions are non-destructive — you cannot purchase content, change accounts or payment settings, delete apps, change parental controls, or factory reset. Prefer taking a screenshot to understand state before acting, speak to the user in plain language (avoid technical terms), and confirm with them before major or ambiguous actions. Escalate to a human when a login/password or purchase prompt appears, the screen is unclear, or navigation repeatedly fails.",
+  "description": "Control and inspect a family member's Google TV through the FamilyTV bridge. Use this to diagnose and fix common TV problems remotely: check reachability, wake the TV if it is asleep, see what app is on screen, take a screenshot to understand the current state, navigate menus, type text, launch apps, ask Gemini / Google TV search text queries, and recover a stuck TV. All actions are non-destructive — you cannot purchase content, change accounts or payment settings, delete apps, change parental controls, or factory reset. Prefer taking a screenshot to understand state before acting, speak to the user in plain language (avoid technical terms), and confirm with them before major or ambiguous actions. Escalate to a human when a login/password or purchase prompt appears, the screen is unclear, or navigation repeatedly fails.",
   "input_schema": {
     "type": "object",
     "properties": {
       "action": {
         "type": "string",
-        "description": "What to do. 'check_status' = is the TV reachable. 'current_app' = what's on screen now. 'list_apps' = installed apps. 'take_screenshot' = capture the current screen (best first step for diagnosis). 'press_button' = one remote button (requires 'key'). 'type_text' = type into a focused field (requires 'text'). 'open_app' = launch a known app (requires 'app_name'). 'reset_home' = go back to the home screen to recover a stuck TV.",
+        "description": "What to do. 'check_status' = is the TV reachable. 'wake_tv' = wake the TV/streamer if it is asleep. 'current_app' = what's on screen now. 'list_apps' = installed apps. 'take_screenshot' = capture the current screen (best first step for diagnosis). 'press_button' = one remote button (requires 'key'). 'type_text' = type into a focused field (requires 'text'). 'open_app' = launch a known app (requires 'app_name'). 'open_tv_assistant' = open Google TV search/Gemini. 'ask_tv_assistant' = send a text query to Google TV search/Gemini (requires 'query'). 'reset_home' = go back to the home screen to recover a stuck TV.",
         "enum": [
           "check_status",
           "current_app",
           "list_apps",
           "take_screenshot",
+          "wake_tv",
           "press_button",
           "type_text",
           "open_app",
+          "open_tv_assistant",
+          "ask_tv_assistant",
           "reset_home"
         ]
       },
@@ -33,6 +36,10 @@
       "app_name": {
         "type": "string",
         "description": "Friendly app name for action 'open_app' (e.g. netflix, youtube, youtube_tv). Use 'list_apps' to see what's installed."
+      },
+      "query": {
+        "type": "string",
+        "description": "Text query for action 'ask_tv_assistant'. This is sent to Google TV search/Gemini as typed text, not streamed microphone audio."
       }
     },
     "required": ["action"]

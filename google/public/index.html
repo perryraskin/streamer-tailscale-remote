@@ -4,6 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <meta name="theme-color" content="#0f1320" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="FamilyTV" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <title>FamilyTV Remote</title>
   <style>
     :root {
@@ -17,38 +24,56 @@
       --bad: #e74c3c;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { margin: 0; height: 100%; }
+    html {
+      margin: 0;
+      min-height: 100%;
+      width: 100%;
+      overflow-x: hidden;
+      background: var(--bg);
+    }
+    body {
+      margin: 0;
+      min-height: 100%;
+      width: min(100%, 460px);
+      max-width: 100%;
+      overflow-x: clip;
+    }
     body {
       background: var(--bg); color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       display: flex; flex-direction: column; align-items: center;
       padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
-      gap: 16px; max-width: 460px; margin: 0 auto; user-select: none;
+      gap: 16px; margin: 0 auto; user-select: none;
     }
     header { width: 100%; display: flex; align-items: center; justify-content: space-between; }
     h1 { font-size: 18px; margin: 0; letter-spacing: .5px; }
     #status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
     #dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
     #dot.ok { background: var(--ok); } #dot.bad { background: var(--bad); }
-    button { font: inherit; color: var(--text); background: var(--btn); border: none; border-radius: 14px; padding: 18px; font-size: 16px; cursor: pointer; transition: transform .05s, background .15s; }
+    button { min-width: 0; font: inherit; color: var(--text); background: var(--btn); border: none; border-radius: 14px; padding: 18px; font-size: 16px; cursor: pointer; transition: transform .05s, background .15s; overflow-wrap: anywhere; }
     button:active { background: var(--accent); transform: scale(.96); }
-    .panel { width: 100%; background: var(--panel); border-radius: 20px; padding: 16px; }
+    .panel { width: 100%; max-width: 100%; overflow: hidden; background: var(--panel); border-radius: 20px; padding: 16px; }
     .label { font-size: 12px; color: var(--muted); margin: 0 0 8px 2px; text-transform: uppercase; letter-spacing: 1px; }
-    .dpad { display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 10px; aspect-ratio: 1/1; }
+    .dpad { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); grid-template-rows: repeat(3,minmax(0,1fr)); gap: 10px; aspect-ratio: 1/1; }
     .dpad button { font-size: 22px; height: 100%; }
     .ok-btn { background: var(--accent); font-weight: 600; }
     .span-empty { visibility: hidden; }
-    .row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
-    .apps { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+    .row { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 12px; }
+    .apps { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
     .apps button { font-weight: 600; text-transform: capitalize; }
     #shot { width: 100%; border-radius: 12px; display: block; background: #000; aspect-ratio: 16/9; object-fit: contain; }
     .shotbar { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
     .shotbar button { flex: 1; padding: 12px; }
+    .shotbar select { min-width: 74px; font: inherit; color: var(--text); background: var(--btn); border: none; border-radius: 12px; padding: 12px 8px; }
     .toggle { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
     .typebar { display: flex; gap: 10px; }
-    .typebar input { flex: 1; font: inherit; padding: 14px; border-radius: 12px; border: none; background: #0c0f1a; color: var(--text); }
+    .typebar input { min-width: 0; flex: 1; font: inherit; padding: 14px; border-radius: 12px; border: none; background: #0c0f1a; color: var(--text); }
     .typebar button { padding: 14px 18px; }
-    #toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(20px); background: #000a; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; backdrop-filter: blur(6px); }
+    .commandbar { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 10px; }
+    .commandbar input { min-width: 0; font: inherit; padding: 14px; border-radius: 12px; border: none; background: #0c0f1a; color: var(--text); }
+    .commandbar button { padding: 14px 16px; white-space: nowrap; }
+    .commandbar button[disabled] { opacity: .45; cursor: default; }
+    #toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; max-width: calc(100vw - 32px); transform: translateX(-50%) translateY(20px); background: #000a; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; backdrop-filter: blur(6px); }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
@@ -63,7 +88,21 @@
     <img id="shot" alt="TV screenshot — tap refresh" />
     <div class="shotbar">
       <button id="refresh">⟳ Refresh</button>
+      <select id="auto-rate" aria-label="Auto refresh rate">
+        <option value="3000">3s</option>
+        <option value="2000">2s</option>
+        <option value="1000">live</option>
+      </select>
       <label class="toggle"><input type="checkbox" id="auto" /> auto</label>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="label">Command</p>
+    <div class="commandbar">
+      <input id="commandin" type="text" placeholder="Open YouTube TV" autocapitalize="sentences" autocomplete="off" />
+      <button id="listen" type="button">Speak</button>
+      <button id="run-command" type="button">Run</button>
     </div>
   </div>
 
@@ -82,7 +121,8 @@
     <div class="row">
       <button data-key="back">↩ Back</button>
       <button data-key="home">⌂ Home</button>
-      <button data-task="reset-home">⟳ Reset</button>
+      <button data-task="wake" data-toast="Wake sent">⏻ Wake</button>
+      <button data-task="reset-home" data-toast="Reset sent">⟳ Reset</button>
     </div>
   </div>
 
@@ -135,7 +175,7 @@
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.key) post('/remote/' + b.dataset.key);
-      else if (b.dataset.task) { post('/task/' + b.dataset.task, 'Reset sent'); setTimeout(refreshShot, 600); }
+      else if (b.dataset.task) { post('/task/' + b.dataset.task, b.dataset.toast || 'Sent'); setTimeout(refreshShot, 600); }
       else if (b.dataset.app) { post('/launch/' + b.dataset.app, 'Opening ' + b.textContent); setTimeout(refreshShot, 1500); }
     });
 
@@ -153,15 +193,85 @@
     document.getElementById('send').addEventListener('click', sendText);
     document.getElementById('textin').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendText(); });
 
+    // Natural-language command input, shared with Siri Shortcuts via /command.
+    const commandInput = document.getElementById('commandin');
+    const listenButton = document.getElementById('listen');
+    async function runCommand(text) {
+      const command = String(text || commandInput.value || '').trim();
+      if (!command) return;
+      try {
+        const res = await fetch('/command', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: command }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.ok) throw new Error(body.error || 'HTTP ' + res.status);
+        toast(body.message || 'Command sent');
+        commandInput.value = '';
+        const refreshingActions = ['open_app', 'press_button', 'reset_home', 'wake_tv', 'type_text', 'open_tv_assistant', 'ask_tv_assistant'];
+        if (body.parsed && refreshingActions.includes(body.parsed.action)) {
+          setTimeout(refreshShot, ['open_app', 'ask_tv_assistant'].includes(body.parsed.action) ? 1500 : 600);
+        }
+      } catch (e) { toast('Failed: ' + e.message); }
+    }
+    document.getElementById('run-command').addEventListener('click', () => runCommand());
+    commandInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') runCommand(); });
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.addEventListener('start', () => { listenButton.textContent = 'Listening'; listenButton.disabled = true; });
+      recognition.addEventListener('end', () => { listenButton.textContent = 'Speak'; listenButton.disabled = false; });
+      recognition.addEventListener('result', (event) => {
+        const text = event.results && event.results[0] && event.results[0][0] && event.results[0][0].transcript;
+        if (text) { commandInput.value = text; runCommand(text); }
+      });
+      recognition.addEventListener('error', (event) => { toast('Voice failed: ' + event.error); });
+      listenButton.addEventListener('click', () => recognition.start());
+    } else {
+      listenButton.disabled = true;
+      listenButton.title = 'Voice input is not available in this browser';
+    }
+
     // Screenshot
     const shot = document.getElementById('shot');
-    function refreshShot() { shot.src = '/screenshot?t=' + Date.now(); }
+    const auto = document.getElementById('auto');
+    const autoRate = document.getElementById('auto-rate');
+    let shotLoading = false;
+    let shotQueued = false;
+    function refreshShot() {
+      if (shotLoading) {
+        shotQueued = true;
+        return;
+      }
+      shotLoading = true;
+      shot.src = '/screenshot?t=' + Date.now();
+    }
+    function finishShot() {
+      shotLoading = false;
+      if (shotQueued) {
+        shotQueued = false;
+        refreshShot();
+      }
+    }
+    shot.addEventListener('load', finishShot);
+    shot.addEventListener('error', finishShot);
     document.getElementById('refresh').addEventListener('click', refreshShot);
     let autoTimer = null;
-    document.getElementById('auto').addEventListener('change', (e) => {
-      if (e.target.checked) { refreshShot(); autoTimer = setInterval(refreshShot, 3000); }
-      else { clearInterval(autoTimer); autoTimer = null; }
-    });
+    function resetAutoTimer() {
+      clearInterval(autoTimer);
+      autoTimer = null;
+      if (auto.checked) {
+        refreshShot();
+        autoTimer = setInterval(refreshShot, Number(autoRate.value));
+      }
+    }
+    auto.addEventListener('change', resetAutoTimer);
+    autoRate.addEventListener('change', resetAutoTimer);
 
     // Health + current app
     const dot = document.getElementById('dot');
@@ -196,6 +306,12 @@
     checkHealth();
     setInterval(checkHealth, 15000);
     refreshShot();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
   </script>
 </body>
 </html>

@@ -13,10 +13,12 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { getDriver } = require('./drivers');
+const { parseVoiceCommand, runParsedCommand } = require('./lib/voice-command');
 
 const PORT = process.env.PORT || 3000;
 const STREAM_URL = process.env.STREAM_URL || null; // optional HDMI live view
 const driver = getDriver();
+let screenshotInFlight = null;
 
 function logAction(event, fields = {}) {
   process.stdout.write(
@@ -89,14 +91,51 @@ app.post('/launch/:appName', (req, res) => {
   handle(res, 'launch', { appName }, () => driver.launchApp(appName));
 });
 
+// POST /command — natural-language command for PWA voice and Siri Shortcuts.
+app.post('/command', async (req, res) => {
+  const text = (req.body && req.body.text) || req.query.text || '';
+  const parsed = parseVoiceCommand(text, {
+    appPackages: driver.APP_PACKAGES || {},
+    keyMap: driver.KEYMAP || {},
+  });
+
+  if (!parsed.ok) {
+    logAction('voice_command_rejected', { text, error: parsed.error });
+    return res.status(400).json(parsed);
+  }
+
+  try {
+    const result = await runParsedCommand(parsed, driver);
+    logAction('voice_command', { text, action: parsed.action, key: parsed.key, appName: parsed.app_name });
+    res.json({ ...result, message: parsed.message });
+  } catch (err) {
+    logAction('voice_command_error', { text, action: parsed.action, error: err.message });
+    const status = err.code === 'BAD_KEY' || err.code === 'BAD_APP' ? 400 : 502;
+    res.status(status).json({ ok: false, parsed, error: err.message, known: err.known });
+  }
+});
+
 // POST /task/reset-home — recover to the home screen.
 app.post('/task/reset-home', (req, res) => handle(res, 'reset_home', {}, () => driver.resetHome()));
+
+// POST /task/wake — wake the streamer/TV if it is asleep.
+app.post('/task/wake', (req, res) => handle(res, 'wake', {}, () => driver.wakeDevice()));
+
+function takeSharedScreenshot() {
+  if (!screenshotInFlight) {
+    screenshotInFlight = driver.takeScreenshot().finally(() => {
+      screenshotInFlight = null;
+    });
+  }
+  return screenshotInFlight;
+}
 
 // GET /screenshot — current screen as PNG (the key diagnostic).
 app.get('/screenshot', async (req, res) => {
   try {
-    const { contentType, buffer } = await driver.takeScreenshot();
+    const { contentType, buffer } = await takeSharedScreenshot();
     logAction('screenshot', { bytes: buffer.length });
+    res.set('Cache-Control', 'no-store');
     res.type(contentType).send(buffer);
   } catch (err) {
     logAction('screenshot_error', { error: err.message });
