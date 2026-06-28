@@ -154,12 +154,15 @@ They were tuned against the parents' Google TV Streamer on 2026-06-26; re-run
 | `GOOGLE_TV_ADDR` | (required unless exactly one adb device is connected) | `HOST:PORT` of the paired Google TV — all adb calls target it |
 | `ADB_BIN` | `adb` | path to the adb binary (tests point this at a fake) |
 | `PORT` | `3000` | API/web-remote port |
+| `LISTEN_HOST` | `0.0.0.0` | interface/address the API binds to; set to a Tailscale IP for Tailscale-only Docker deploys |
 | `TAILSCALE_SERVE_PORT` | `8443` | Tailscale HTTPS port used by `scripts/start-familytv.sh --serve` |
 | `DRIVER` | `google-tv` | which driver to load |
 | `STREAM_URL` | (unset) | optional HDMI live-view stream for the web remote |
 
 See [docs/Deployment-Env.md](docs/Deployment-Env.md) for the private env file,
 Tailscale Serve URL, and devpi/systemd setup.
+
+For Docker, see [`../deploy/docker`](../deploy/docker).
 
 ## Testing (no device needed)
 

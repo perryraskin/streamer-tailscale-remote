@@ -7,3 +7,6 @@ npm-debug.log*
 google/.env
 google/.env.*
 !google/.env.example
+deploy/docker/.env
+deploy/docker/*.env
+!deploy/docker/*.env.example

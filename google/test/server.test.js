@@ -43,6 +43,7 @@ before(async () => {
     env: {
       ...process.env,
       PORT: String(SERVER_PORT),
+      LISTEN_HOST: '127.0.0.1',
       DRIVER: 'google-tv',
       ADB_BIN: FAKE_ADB,
       ADB_LOG,

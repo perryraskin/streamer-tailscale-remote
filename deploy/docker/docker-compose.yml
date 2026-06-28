@@ -1,0 +1,15 @@
+services:
+  familytv-google:
+    build:
+      context: ${FAMILYTV_CONTEXT:-../../google}
+      dockerfile: Dockerfile
+    container_name: ${FAMILYTV_CONTAINER_NAME:-familytv-google}
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - ${FAMILYTV_ENV_FILE:-./familytv.env}
+    environment:
+      PORT: ${FAMILYTV_PORT:-3000}
+      LISTEN_HOST: ${FAMILYTV_LISTEN_HOST:-0.0.0.0}
+    volumes:
+      - ${FAMILYTV_ADB_HOME:?set FAMILYTV_ADB_HOME}:/root/.android

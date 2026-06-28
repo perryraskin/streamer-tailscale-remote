@@ -16,6 +16,7 @@ const { getDriver } = require('./drivers');
 const { parseVoiceCommand, runParsedCommand } = require('./lib/voice-command');
 
 const PORT = process.env.PORT || 3000;
+const LISTEN_HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const STREAM_URL = process.env.STREAM_URL || null; // optional HDMI live view
 const driver = getDriver();
 let screenshotInFlight = null;
@@ -144,10 +145,10 @@ app.get('/screenshot', async (req, res) => {
 });
 
 if (require.main === module) {
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, LISTEN_HOST, () => {
     logAction('server_start', { port: PORT, stream_url: STREAM_URL });
     // eslint-disable-next-line no-console
-    console.log(`FamilyTV API (${driver.name}) running on port ${PORT}`);
+    console.log(`FamilyTV API (${driver.name}) running on ${LISTEN_HOST}:${PORT}`);
   });
 }
 
